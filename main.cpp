@@ -29,21 +29,15 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <malloc.h>
+#include <stdlib.h>
+#include <string.h>
 
 #ifdef _MSC_VER
 #  include <Windows.h>
+#else
+#  include <sys/stat.h>
+#  include <sys/types.h>
 #endif
-
-auto print_usage() -> void {
-    printf("Info:\n"
-           "=====\n"
-           "  Invokes a command with arguments if a file is newer than another\n"
-           "\n"
-           "Usage:\n"
-           "======\n"
-           "  if_newer <file A> <file B> <cmd> <args> ...\n");
-    exit(1);
-}
 
 auto file_newer(char* file_a, char* file_b) -> bool {
 #ifdef _MSC_VER
@@ -71,16 +65,29 @@ auto file_newer(char* file_a, char* file_b) -> bool {
     return CompareFileTime(&last_write_a, &last_write_b) > 0;
 #else
     // linux land
+    struct stat attr_a;
+    struct stat attr_b;
+    if (stat(file_a, &attr_a) != 0) {
+        fprintf(stderr, "\n  ERROR: file %s was not found\n", file_a);
+        exit(1);
+    }
 
-    // TODO(Felix): write the linux code
+    if (stat(file_b, &attr_b) != 0)
+        return true;
 
-    return true;
+    return attr_a.st_mtim.tv_sec > attr_b.st_mtim.tv_sec;
 #endif
 }
 
 auto main(int argc, char** argv) -> int {
     if (argc < 4) {
-        print_usage();
+        printf("Info:\n"
+               "=====\n"
+               "  Invokes a command with arguments if a file is newer than another\n"
+               "\n"
+               "Usage:\n"
+               "======\n"
+               "  if_newer <file A> <file B> <cmd> <args> ...\n");
         return 1;
     }
 
@@ -113,7 +120,11 @@ auto main(int argc, char** argv) -> int {
 
         return system(full_cmd_line);
     } else {
-        printf("%*s[skipped]\n", max(82-chars_printed, 0), "");
+        int padding = 82-chars_printed;
+        if (padding < 0)
+            padding = 0;
+
+        printf("%*s[skipped]\n", padding, "");
     }
 
     return 0;
