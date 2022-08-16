@@ -39,6 +39,10 @@
 #  include <sys/types.h>
 #endif
 
+#define console_green    "\x1B[0;32m"
+#define console_normal   "\x1B[0m"
+#define console_magenta  "\x1B[0;35m"
+
 auto file_newer(char* file_a, char* file_b) -> bool {
 #ifdef _MSC_VER
     // windows land
@@ -92,6 +96,10 @@ auto main(int argc, char** argv) -> int {
     }
 
     int chars_printed = printf("%s -> %s", argv[1], argv[2]);
+    int padding = 82-chars_printed;
+    if (padding < 0)
+        padding = 0;
+
 
     if (file_newer(argv[1], argv[2])) {
         char*  cmd = argv[3];
@@ -114,17 +122,13 @@ auto main(int argc, char** argv) -> int {
             strcat(full_cmd_line, cmd_args[i]);
         }
 
-        // printf("\n  running: %s\n\n", full_cmd_line);
-        printf("\n");
+        printf(console_magenta "%*s[running]\n", padding, "");
+        printf("  -> %s\n" console_normal, full_cmd_line);
         fflush(stdout);
 
         return system(full_cmd_line);
     } else {
-        int padding = 82-chars_printed;
-        if (padding < 0)
-            padding = 0;
-
-        printf("%*s[skipped]\n", padding, "");
+        printf(console_green "%*s[skipped]\n" console_normal, padding, "");
     }
 
     return 0;
