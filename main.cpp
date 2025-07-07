@@ -84,6 +84,18 @@ auto file_newer(char* file_a, char* file_b) -> bool {
 }
 
 auto main(int argc, char** argv) -> int {
+#ifdef _MSC_VER
+        // enable colored terminal output for windows
+    HANDLE hOut  = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD dwMode = 0;
+    GetConsoleMode(hOut, &dwMode);
+#ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING // g++ does not seem to define it
+#define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
+#endif
+    dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+    SetConsoleMode(hOut, dwMode);
+#endif
+
     if (argc < 4) {
         printf("Info:\n"
                "=====\n"
@@ -96,7 +108,7 @@ auto main(int argc, char** argv) -> int {
     }
 
     int chars_printed = printf("%s -> %s", argv[1], argv[2]);
-    int padding = 82-chars_printed;
+    int padding = 87-chars_printed;
     if (padding < 0)
         padding = 0;
 
